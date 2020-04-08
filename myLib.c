@@ -6,9 +6,6 @@ unsigned short *videoBuffer = (unsigned short *)0x6000000;
 // The start of DMA registers
 DMA *dma = (DMA *)0x40000B0;
 
-// The shadowOAM
-OBJ_ATTR shadowOAM[128];
-
 // Set a pixel on the screen in Mode 3
 void setPixel3(int col, int row, unsigned short color) {
     videoBuffer[OFFSET(col, row, SCREENWIDTH)] = color;
@@ -30,7 +27,7 @@ void setPixel4(int col, int row, unsigned char colorIndex) {
 // Draw a rectangle at the specified location and size in Mode 3
 void drawRect3(int col, int row, int width, int height, volatile unsigned short color) {
     for(int r = 0; r < height; r++) {
-        DMANow(3, &color, &videoBuffer[OFFSET(col, row+r, SCREENWIDTH)], DMA_SOURCE_FIXED | width);
+        DMANow(3, &color, &videoBuffer[OFFSET(col, row + r, SCREENWIDTH)], DMA_SOURCE_FIXED | width);
     }
 }
 

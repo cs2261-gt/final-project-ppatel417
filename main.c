@@ -17,15 +17,16 @@ void instructionState();
 void gameState();
 void pauseState();
 void loseState();
-void goToStartState();
+void goToStart();
 void goToInstructionState();
-void goToGameState();
-void goToPauseState();
-void goToLoseState();
+void goToGame();
+void goToPause();
+void goToLose();
 
 // States
 enum {START, INSTRUCTION, GAME, PAUSE, LOSE};
 int state;
+int lives = 3;
 
 OBJ_ATTR shadowOAM[128];
 
@@ -69,165 +70,98 @@ int main() {
     }
 }
 
-// Sets up GBA
 void initialize() {
-    goToStartState();
+    REG_DISPCTL = MODE0 | BG1_ENABLE | SPRITE_ENABLE;
+    REG_BG1CNT = BG_4BPP | BG_SIZE_LARGE | BG_CHARBLOCK(0) | BG_SCREENBLOCK(28);
+    REG_BG0CNT = BG_4BPP | BG_SIZE_LARGE | BG_CHARBLOCK(1) | BG_SCREENBLOCK(27);
+	goToStart();
 }
 
 void startState() {
-
-    // Lock the framerate to 60 fps
-    waitForVBlank();
-
-    // Press START to go to the game
     if (BUTTON_PRESSED(BUTTON_START)) {
         // initGame();
-        goToGameState();
+        goToGame();
     }
-
-    // Press SELECT to go to the instructions
-    if (BUTTON_PRESSED(BUTTON_SELECT)) {
-        goToInstructionState();
-    }
+    if (BUTTON_PRESSED(BUTTON_A)) {
+       goToInstructionState();
+    } 
 }
 
-void goToStartState() {
-
-    waitForVBlank();
-
-    // Loads the background for the start screen
-    DMANow(3, startScreenPal, PALETTE, 256);
-    DMANow(3, startScreenTiles, &CHARBLOCK[0], startScreenTilesLen/2);
-    DMANow(3, startScreenMap, &SCREENBLOCK[31], startScreenMapLen/2);
-
-    // Sets up and shows the background
-    REG_DISPCTL = MODE0 | BG0_ENABLE;
-    REG_BG0CNT = BG_SIZE_SMALL | BG_CHARBLOCK(0) | BG_SCREENBLOCK(31);
-
-    REG_BG0HOFF = 0;
+void goToStart() {
     REG_BG0VOFF = 0;
-
+    REG_BG1VOFF = 0;
+    hideSprites();
+    DMANow(3, shadowOAM, OAM, 128 * 4);
+    DMANow(3, startScreenPal, PALETTE, startScreenPalLen/2);
+    DMANow(3, startScreenTiles, &CHARBLOCK[0], startScreenTilesLen / 2);
+    DMANow(3, startScreenMap, &SCREENBLOCK[28], startScreenMapLen / 2);
     state = START;
 }
 
 void instructionState() {
-    waitForVBlank();
-
-    // Press START to go to the game
-    if (BUTTON_PRESSED(BUTTON_START)) {
-        // initGame();
-        goToGameState();
-
-    }
-
-    // Press SELECT to go to the start screen
-    if (BUTTON_PRESSED(BUTTON_SELECT)) {
-        goToStartState();
+    if (BUTTON_PRESSED(BUTTON_A)) {
+        goToStart();
     }
 }
 
 void goToInstructionState() {
-    waitForVBlank();
-
-    DMANow(3, instructionScreenPal, PALETTE, 256);
-    DMANow(3, instructionScreenTiles, &CHARBLOCK[0], instructionScreenTilesLen/2);
-    DMANow(3, instructionScreenMap, &SCREENBLOCK[31], instructionScreenMapLen/2);
-
-    // Sets up and shows the background
-    REG_DISPCTL = MODE0 | BG0_ENABLE;
-    REG_BG0CNT = BG_SIZE_SMALL | BG_CHARBLOCK(0) | BG_SCREENBLOCK(31);
-
-    REG_BG0HOFF = 0;
-    REG_BG0VOFF = 0;
-
+    DMANow(3, instructionScreenPal, PALETTE, instructionScreenPalLen/2);
+    DMANow(3, instructionScreenTiles, &CHARBLOCK[0], instructionScreenTilesLen / 2);
+    DMANow(3, instructionScreenMap, &SCREENBLOCK[28], instructionScreenMapLen / 2);
     state = INSTRUCTION;
 }
 
 void gameState() {
+   // updateGame();
     waitForVBlank();
-
-    // goes to the pause screen when START is pressed
+    //drawGame();
     if (BUTTON_PRESSED(BUTTON_START)) {
-        goToPauseState();
+        goToPause();
     }
-
 }
 
-void goToGameState() {
-
-    // Sets up and shows background
-    REG_DISPCTL = MODE0 | BG0_ENABLE | SPRITE_ENABLE;
-    REG_BG0CNT = BG_SIZE_TALL | BG_CHARBLOCK(0) | BG_SCREENBLOCK(30);
-
-    // Loads in the background for the game screen
-    DMANow(3, gameScreenPal, PALETTE, 256);
-    DMANow(3, gameScreenTiles, &CHARBLOCK[0], gameScreenTilesLen/2);
-    DMANow(3, gameScreenMap, &SCREENBLOCK[30], gameScreenMapLen/2);
-
-    REG_BG0HOFF = 0;
-    REG_BG0VOFF = 0;
-
+void goToGame() {
+    DMANow(3, gameScreenPal, PALETTE, gameScreenPalLen / 2);
+    DMANow(3, gameScreenTiles, &CHARBLOCK[0], gameScreenTilesLen / 2);
+    DMANow(3, gameScreenMap, &SCREENBLOCK[28], gameScreenMapLen / 2);
     state = GAME;
-}
+} 
 
 void pauseState() {
-
-    waitForVBlank();
-
-    // resume the game by pressing START
     if (BUTTON_PRESSED(BUTTON_START)) {
-        goToGameState();
-    }
-
-    // restarts the game by pressing SELECT
+        goToGame();
+    } 
     if (BUTTON_PRESSED(BUTTON_SELECT)) {
-        goToStartState();
-    }
+        goToStart();
+    } 
 }
 
-void goToPauseState() {
-
+void goToPause() {
+    REG_DISPCTL = MODE0 | BG1_ENABLE | SPRITE_ENABLE;
+    DMANow(3, pauseScreenPal, PALETTE, pauseScreenPalLen/2);
+    DMANow(3, pauseScreenTiles, &CHARBLOCK[0], pauseScreenTilesLen / 2);
+    DMANow(3, pauseScreenMap, &SCREENBLOCK[28], pauseScreenMapLen / 2);
     waitForVBlank();
-
-    DMANow(3, pauseScreenPal, PALETTE, 256);
-    DMANow(3, pauseScreenTiles, &CHARBLOCK[0], pauseScreenTilesLen/2);
-    DMANow(3, pauseScreenMap, &SCREENBLOCK[31], pauseScreenMapLen/2);
-
-    // Sets up and shows the background
-    REG_DISPCTL = MODE0 | BG0_ENABLE | BG1_ENABLE;
-    REG_BG0CNT = BG_SIZE_SMALL | BG_CHARBLOCK(0) | BG_SCREENBLOCK(31);
-    REG_BG1CNT = BG_SIZE_SMALL | BG_CHARBLOCK(1) | BG_SCREENBLOCK(30);
-
-    REG_BG0HOFF = 0;
-    REG_BG0VOFF = 0;
-
+    DMANow(3, shadowOAM, OAM, (4*128));
     state = PAUSE;
-}
+} 
 
 void loseState() {
-
     waitForVBlank();
-
     if (BUTTON_PRESSED(BUTTON_START)) {
-        goToStartState();
-    }
+        initialize();
+    } 
 }
 
-void goToLoseState() {
-
-    waitForVBlank();
-
-    DMANow(3, loseScreenPal, PALETTE, 256);
-    DMANow(3, loseScreenTiles, &CHARBLOCK[0], loseScreenTilesLen/2);
-    DMANow(3, loseScreenMap, &SCREENBLOCK[31], loseScreenMapLen/2);
-
-    // Sets up and shows the background
-    REG_DISPCTL = MODE0 | BG0_ENABLE;
-    REG_BG0CNT = BG_SIZE_SMALL | BG_CHARBLOCK(0) | BG_SCREENBLOCK(31);
-
-    REG_BG0HOFF = 0;
+// We hide sprites and draw the lose background if we lose
+void goToLose() {
     REG_BG0VOFF = 0;
-
+    REG_BG1VOFF = 0;
+    DMANow(3, loseScreenPal, PALETTE, loseScreenPalLen/2);
+    DMANow(3, loseScreenTiles, &CHARBLOCK[0], loseScreenTilesLen / 2);
+    DMANow(3, loseScreenMap, &SCREENBLOCK[28], loseScreenMapLen / 2);
+    waitForVBlank();
+    hideSprites();
+    DMANow(3, shadowOAM, OAM, (4*128));
     state = LOSE;
 }
-

@@ -153,7 +153,6 @@ void loseState() {
     } 
 }
 
-// We hide sprites and draw the lose background if we lose
 void goToLose() {
     REG_BG0VOFF = 0;
     REG_BG1VOFF = 0;
